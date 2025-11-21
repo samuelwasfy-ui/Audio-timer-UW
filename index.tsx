@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Play, Pause, Square, History, Home, Settings, Volume2, VolumeX, CheckCircle, Activity } from 'lucide-react';
+import { Play, Pause, Square, History, Home, Settings, Volume2, VolumeX, CheckCircle, Activity, ChevronLeft } from 'lucide-react';
 
 // --- Types ---
-type View = 'splash' | 'home' | 'session' | 'history';
+type View = 'splash' | 'home' | 'session' | 'history' | 'settings';
 
 type SessionPhase = 'entry' | 'immersion' | 'return';
 
@@ -139,7 +139,7 @@ const SessionView = ({ onComplete, onExit }: { onComplete: (duration: number) =>
   const PHASE_2_END = 18 * 60; // Immersion ends at 18m
   // Phase 3 ends at 20m
 
-  const [timeLeft, setTimeLeft] = useState(0); // Count UP timer logic for simplicity in this demo, or Count DOWN? Let's do Count UP to match phases easily
+  const [timeLeft, setTimeLeft] = useState(0); // Count UP timer logic for simplicity in this demo
   const [elapsed, setElapsed] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [isAudioOn, setIsAudioOn] = useState(true);
@@ -247,8 +247,8 @@ const HistoryView = ({ history, onBack }: { history: SessionRecord[], onBack: ()
   return (
     <div className="h-full flex flex-col bg-zinc-950 animate-fade-in">
       <div className="p-6 border-b border-zinc-900 flex items-center">
-        <button onClick={onBack} className="mr-4 text-zinc-400 hover:text-zinc-100">
-            <Home size={24} />
+        <button onClick={onBack} className="mr-4 text-zinc-400 hover:text-zinc-100 transition-colors p-1 hover:bg-zinc-900 rounded-full">
+            <ChevronLeft size={24} />
         </button>
         <h2 className="text-xl font-light text-zinc-100 tracking-wide">History</h2>
       </div>
@@ -280,12 +280,48 @@ const HistoryView = ({ history, onBack }: { history: SessionRecord[], onBack: ()
   );
 };
 
-const Dashboard = ({ onStart, history, onHistory }: { onStart: () => void, history: SessionRecord[], onHistory: () => void }) => {
+const SettingsView = ({ onBack }: { onBack: () => void }) => {
+  return (
+    <div className="h-full flex flex-col bg-zinc-950 animate-fade-in">
+      <div className="p-6 border-b border-zinc-900 flex items-center">
+        <button onClick={onBack} className="mr-4 text-zinc-400 hover:text-zinc-100 transition-colors p-1 hover:bg-zinc-900 rounded-full">
+            <ChevronLeft size={24} />
+        </button>
+        <h2 className="text-xl font-light text-zinc-100 tracking-wide">Settings</h2>
+      </div>
+      <div className="p-6 space-y-6">
+        <div className="space-y-2">
+          <h3 className="text-sm uppercase tracking-wider text-zinc-500">Preferences</h3>
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex justify-between items-center">
+            <span className="text-zinc-300">NFC Auto-Start</span>
+            <div className="w-10 h-6 bg-teal-500/20 rounded-full flex items-center p-1 justify-end cursor-pointer">
+              <div className="w-4 h-4 bg-teal-500 rounded-full"></div>
+            </div>
+          </div>
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex justify-between items-center">
+             <span className="text-zinc-300">Haptics</span>
+             <div className="w-10 h-6 bg-zinc-800 rounded-full flex items-center p-1 justify-start cursor-pointer">
+               <div className="w-4 h-4 bg-zinc-600 rounded-full"></div>
+             </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+            <h3 className="text-sm uppercase tracking-wider text-zinc-500">About</h3>
+            <div className="text-zinc-600 text-sm">
+                <p>Version 1.0.0</p>
+                <p>Build 240512.1</p>
+            </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = ({ onStart, history, onHistory, onSettings }: { onStart: () => void, history: SessionRecord[], onHistory: () => void, onSettings: () => void }) => {
   const totalMinutes = useMemo(() => Math.floor(history.reduce((acc, curr) => acc + curr.duration, 0) / 60), [history]);
   const streak = useMemo(() => {
-    // Simplified streak logic
     if (history.length === 0) return 0;
-    // In a real app, check consecutive days. Here just returning session count for demo or random number if non-zero
     return history.length; 
   }, [history]);
 
@@ -349,7 +385,7 @@ const Dashboard = ({ onStart, history, onHistory }: { onStart: () => void, histo
                 <History size={20} />
                 <span className="text-[10px] uppercase tracking-wider">History</span>
             </button>
-            <button className="flex flex-col items-center space-y-1 text-zinc-600 hover:text-zinc-300 transition-colors">
+            <button onClick={onSettings} className="flex flex-col items-center space-y-1 text-zinc-600 hover:text-zinc-300 transition-colors">
                 <Settings size={20} />
                 <span className="text-[10px] uppercase tracking-wider">Settings</span>
             </button>
@@ -397,6 +433,7 @@ const App = () => {
                 onStart={() => setView('session')} 
                 history={history}
                 onHistory={() => setView('history')}
+                onSettings={() => setView('settings')}
             />
         )}
         
@@ -410,6 +447,12 @@ const App = () => {
         {view === 'history' && (
             <HistoryView 
                 history={history}
+                onBack={() => setView('home')}
+            />
+        )}
+
+        {view === 'settings' && (
+            <SettingsView
                 onBack={() => setView('home')}
             />
         )}
